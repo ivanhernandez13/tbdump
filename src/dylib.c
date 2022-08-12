@@ -342,6 +342,19 @@ static int parseLoadCommands(FILE *in, dylib_t *dylib, uint32_t ncmds, long star
                        lc.hdr.cmd == LC_VERSION_MIN_IPHONEOS ? PLATFORM_IOS  :
                        lc.hdr.cmd == LC_VERSION_MIN_TVOS     ? PLATFORM_TVOS : PLATFORM_WATCHOS;
                 break;
+            case LC_BUILD_VERSION:
+                if(plat != PLATFORM_UNKNOWN)
+                {
+                    return RETVAL_PLATFORM_MULTI;
+                }
+                struct build_version_command build_version_lc;
+                build_version_lc.cmd = lc.hdr.cmd;
+                build_version_lc.cmdsize = lc.hdr.cmdsize;
+                char *build_version_lcbuf = (char*)&build_version_lc;
+                READ_OR_RETURN(build_version_lcbuf + hdrsize, sizeof(build_version_lc) - hdrsize, in);
+
+                plat = build_version_lc.platform;
+                break;
             case LC_SYMTAB:
                 READ_OR_RETURN(lcbuf + hdrsize, sizeof(lc.symtab) - hdrsize, in)
                 symoff  = lc.symtab.symoff;
